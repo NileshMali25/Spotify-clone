@@ -1,29 +1,30 @@
-const ImageKit = require("imagekit");
+const cloudinary = require('cloudinary').v2;
 
-const imagekit = new ImageKit({
-    publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-    privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-async function uploadFile(file) {
+async function uploadFile(fileBuffer) {
 
-    try {
+    return new Promise((resolve, reject) => {
 
-        const result = await imagekit.upload({
-            file: file,
-            fileName: `music_${Date.now()}.mp3`,
-            folder: "/spotify_music",
-            useUniqueFileName: true
-        });
+        cloudinary.uploader.upload_stream(
+            {
+                resource_type: "video",
+                folder: "spotify_music"
+            },
+            (error, result) => {
 
-        return result;
+                if (error) {
+                    return reject(error);
+                }
 
-    } catch (err) {
-
-        console.log("IMAGEKIT ERROR:", err);
-        throw err;
-    }
+                resolve(result);
+            }
+        ).end(fileBuffer);
+    });
 }
 
 module.exports = {

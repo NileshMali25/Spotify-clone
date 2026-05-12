@@ -10,11 +10,11 @@ const router=express.Router();
 
 router.post(
     '/upload',
-    upload.single('music'),
+    upload.fields([{name: 'music', maxCount: 1}, {name: 'image', maxCount: 1}]),
     musicController.createMusic
 );
 
-router.post('/album', upload.single('album'), musicController.createAlbum);
+router.post('/album', upload.single('image'), musicController.createAlbum);
 
 router.get('/', authMiddleware.authUser, musicController.getAllMusics);
 

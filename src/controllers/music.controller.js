@@ -40,21 +40,26 @@ async function createMusic(req, res) {
     }
 
     try {
-
         const { title } = req.body;
-        console.log(req.file);
-        const file = req.file;
+        const files = req.files;
 
-        if (!file) {
+        if (!files || !files.music) {
             return res.status(400).json({
                 message: "Music file is required"
             });
         }
 
-        const result = await uploadFile(file.buffer);
+        const musicResult = await uploadFile(files.music[0].buffer);
+        let imageUrl = '';
+        
+        if (files.image) {
+            const imageResult = await uploadFile(files.image[0].buffer);
+            imageUrl = imageResult.secure_url;
+        }
 
         const music = await musicModel.create({
-            uri: result.secure_url,
+            uri: musicResult.secure_url,
+            image: imageUrl,
             title,
             artist: decoded.id,
         });
@@ -64,6 +69,7 @@ async function createMusic(req, res) {
             music: {
                 id: music._id,
                 uri: music.uri,
+                image: music.image,
                 title: music.title,
                 artist: music.artist
             }
@@ -106,7 +112,15 @@ async function createAlbum(req, res) {
             });
         }
 
-        const { title, musics } = req.body;
+        let { title, musics } = req.body;
+
+        if (typeof musics === 'string') {
+            try {
+                musics = JSON.parse(musics);
+            } catch(e) {
+                musics = musics.split(',').map(s => s.trim());
+            }
+        }
 
         if (!title) {
             return res.status(400).json({
@@ -120,8 +134,15 @@ async function createAlbum(req, res) {
             });
         }
 
+        let imageUrl = '';
+        if (req.file) {
+            const imageResult = await uploadFile(req.file.buffer);
+            imageUrl = imageResult.secure_url;
+        }
+
         const album = await albumModel.create({
             title,
+            image: imageUrl,
             artist: decoded.id,
             musics
         });
@@ -131,6 +152,7 @@ async function createAlbum(req, res) {
             album: {
                 id: album._id,
                 title: album.title,
+                image: album.image,
                 artist: album.artist,
                 musics: album.musics
             }
@@ -148,7 +170,7 @@ async function createAlbum(req, res) {
 }
 
 async function getAllMusics(req, res) {
-    const musics = await musicModel.find().skip(1).limit(20).populate('artist', 'username email');
+    const musics = await musicModel.find().sort({_id: -1}).limit(20).populate('artist', 'username email');
 
     res.status(200).json({
         message: "Musics fetched successfully",
@@ -159,7 +181,7 @@ async function getAllMusics(req, res) {
 
 
 async function getAllAlbums(req, res) {
-    const albums = await albumModel.find().select("title artist").populate('artist', 'username email');
+    const albums = await albumModel.find().select("title artist image").populate('artist', 'username email');
 
     res.status(200).json({
         message: "Albums fetched successfully",

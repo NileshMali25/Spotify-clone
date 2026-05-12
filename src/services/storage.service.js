@@ -12,7 +12,7 @@ async function uploadFile(fileBuffer) {
 
         cloudinary.uploader.upload_stream(
             {
-                resource_type: "video",
+                resource_type: "auto",
                 folder: "spotify_music"
             },
             (error, result) => {

@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Set up axios defaults
-  axios.defaults.baseURL = '/api';
+  axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || '/api';
   axios.defaults.withCredentials = true; // Important for sending cookies
 
   useEffect(() => {
